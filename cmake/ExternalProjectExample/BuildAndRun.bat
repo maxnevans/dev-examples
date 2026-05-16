@@ -17,6 +17,7 @@ rd /s /q _build
 
 :past_clean
 
+:: Configure cmake project
 cmake -DCMAKE_CXX_COMPILER:STRING=clang -DCMAKE_RC_COMPILER:STRING=llvm-rc -DCMAKE_EXPORT_COMPILE_COMMANDS=TRUE -S . -B _build -G "Ninja Multi-Config" -DCMAKE_BUILD_TYPE=Release
 
 if %ERRORLEVEL% NEQ 0 (
@@ -26,6 +27,7 @@ if %ERRORLEVEL% NEQ 0 (
 
 :past_reconfigure
 
+:: Build cmake project with the generator and compiler specified on configuration step
 cmake --build _build --config Release --target ExternalProjectExample
 
 if %ERRORLEVEL% NEQ 0 (
@@ -35,6 +37,7 @@ if %ERRORLEVEL% NEQ 0 (
 
 :past_build
 
+:: Run the executable built
 call "%~dp0_build\Release\ExternalProjectExample.exe"
 
 if %ERRORLEVEL% NEQ 0 (

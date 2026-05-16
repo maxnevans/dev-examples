@@ -88,6 +88,7 @@ endif()
 
 
 add_executable(ExternalProjectExample main.cpp)
+set_property(TARGET ExternalProjectExample PROPERTY CXX_STANDARD 17)
 target_link_libraries(ExternalProjectExample PRIVATE benchmark::benchmark)
 
 # 
