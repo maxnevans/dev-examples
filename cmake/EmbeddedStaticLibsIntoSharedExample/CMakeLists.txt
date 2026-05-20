@@ -25,7 +25,10 @@ function(AddObjectLibrary Name EndLibType)
         # worry about all OBJECT libraries it directly or indirectly depends on. In particular this
         # is the case because the consumer includes our headers in its implementation.
         #$<$<IN_LIST:COMPILING_AS_OBJECT,$<TARGET_PROPERTY:COMPILE_DEFINITIONS>>:${Name}_EXPORTS>
-    )
+
+        # But this with target property works.
+        $<$<BOOL:$<TARGET_PROPERTY:COMPILE_AS_OBJECT>>:${Name}_EXPORTS>
+  )
   elseif(EndLibType STREQUAL STATIC)
     string(TOUPPER ${Name} UpperCaseName)
     target_compile_definitions(${Name} PUBLIC ${UpperCaseName}_STATIC_DEFINE)
@@ -78,9 +81,13 @@ target_link_libraries(gobby PUBLIC foo $<$<STREQUAL:$<TARGET_PROPERTY:NAME>,${En
 # foo, it's going to have them dllimport, and as both gobby and foo are objects that going to be embedded into a single
 # unit (baz in case it's SHARED, main in case baz STATIC), we gonna have both dllexport and dllimport declarations in
 # the same unit and thus linker warning.
-target_compile_definitions(gobby PRIVATE foo_EXPORTS)
+#target_compile_definitions(gobby PRIVATE foo_EXPORTS)
+
 # This clever approach instead of listing all export macros of dependencies we use inside gobby doesn't work.
 #target_compile_definitions(gobby PRIVATE COMPILING_AS_OBJECT)
+
+# Well, this approach with target properties works.
+set_target_properties(gobby PROPERTIES COMPILE_AS_OBJECT TRUE)
 
 # This library is either SHARED or STATIC for our example.
 add_library(baz ${EndLibraryType} src/baz/baz.cpp)
