@@ -7,12 +7,21 @@ set(CMAKE_CXX_STANDARD 20)
 include(GenerateExportHeader)
 
 # Just wrapped into a function to avoid boilerplate and increase readability of essence
-function(AddObjectLibrary Name EndLibType)
+function(AddObjectLibrary Name EndLibType EndUserOfObjects)
   add_library(${Name} OBJECT)
 
   generate_export_header(${Name} BASE_NAME ${Name} EXPORT_MACRO_NAME ${Name}_API EXPORT_FILE_NAME GeneratedSources/${Name}API.h)
   target_include_directories(${Name} PUBLIC "${CMAKE_CURRENT_BINARY_DIR}/GeneratedSources")
   target_sources(${Name} PUBLIC "${CMAKE_CURRENT_BINARY_DIR}/GeneratedSources/${Name}API.h")
+
+  # First part of the magic: because of transitive inheritance, everyone gonna link against what we
+  # supply here. The important thing here is $<TARGET_OBJECTS:${Name}>. But we can't add it to everything 
+  # that is going to include dependent library (gobby in that example) because of the symbol duplication. 
+  # So we have to add it only to the end user (consumer library/executable) of objects.
+  target_link_libraries(${Name}
+    INTERFACE
+      $<$<STREQUAL:$<TARGET_PROPERTY:NAME>,${EndUserOfObjects}>:$<TARGET_OBJECTS:${Name}>>
+  )
 
   # generate_export_header doesn't add compile definitions to the target, add them ourselves
   if (EndLibType STREQUAL SHARED)
@@ -63,10 +72,6 @@ if(DEFINED BUILD_SHARED_LIBS)
   endif()
 endif()
 
-AddObjectLibrary(foo ${EndLibraryType})
-AddObjectLibrary(bar ${EndLibraryType})
-AddObjectLibrary(gobby ${EndLibraryType})
-
 # End user changes because .lib cant consume object libraries itself
 if(EndLibraryType STREQUAL STATIC)
   set(EndUserOfObjects main)
@@ -74,9 +79,12 @@ elseif(EndLibraryType STREQUAL SHARED)
   set(EndUserOfObjects baz)
 endif()
 
-# The important thing here is $<TARGET_OBJECTS:foo>. But we can't add it to everything that is going to include gobby
-# because of the symbol duplication. So we have to add it only to the end user of objects.
-target_link_libraries(gobby PUBLIC foo $<$<STREQUAL:$<TARGET_PROPERTY:NAME>,${EndUserOfObjects}>:$<TARGET_OBJECTS:foo>>)
+AddObjectLibrary(foo ${EndLibraryType} ${EndUserOfObjects})
+AddObjectLibrary(bar ${EndLibraryType} ${EndUserOfObjects})
+AddObjectLibrary(gobby ${EndLibraryType} ${EndUserOfObjects})
+
+target_link_libraries(gobby PUBLIC foo)
+
 # We also have to duplicate foo_EXPORTS to compile gobby against foo correctly. In case gobby itself includes headers of
 # foo, it's going to have them dllimport, and as both gobby and foo are objects that going to be embedded into a single
 # unit (baz in case it's SHARED, main in case baz STATIC), we gonna have both dllexport and dllimport declarations in
