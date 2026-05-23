@@ -19,6 +19,18 @@ add_library(foo SHARED)
 generate_export_header(foo BASE_NAME foo EXPORT_MACRO_NAME foo_API EXPORT_FILE_NAME GeneratedSources/fooAPI.h)
 target_include_directories(foo PUBLIC "${CMAKE_CURRENT_BINARY_DIR}/GeneratedSources")
 target_sources(foo PUBLIC "${CMAKE_CURRENT_BINARY_DIR}/GeneratedSources/fooAPI.h")
+get_property(foo_TYPE TARGET foo PROPERTY TYPE)
+if(foo_TYPE STREQUAL "STATIC_LIBRARY")
+  target_compile_definitions(foo
+    PRIVATE
+      foo_BUILD_STATIC
+  )
+elseif(foo_TYPE STREQUAL "SHARED_LIBRARY")
+  target_compile_definitions(foo
+    PRIVATE
+      foo_EXPORTS
+  )
+endif()
 
 # Add the module file to the library
 target_sources(foo
