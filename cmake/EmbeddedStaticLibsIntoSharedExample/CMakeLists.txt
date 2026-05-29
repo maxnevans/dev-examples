@@ -45,9 +45,14 @@ function(AddObjectLibrary Name EndLibType EndUserOfObjects)
 
   target_sources(${Name}
     PUBLIC
-      src/${Name}/${Name}.h
+      src/libs/${Name}/${Name}.h
     PRIVATE
-      src/${Name}/${Name}.cpp
+      src/libs/${Name}/${Name}.cpp
+  )
+
+  target_include_directories(${Name}
+    PUBLIC
+      src/libs/${Name}
   )
 endfunction()
 
@@ -83,7 +88,9 @@ AddObjectLibrary(foo ${EndLibraryType} ${EndUserOfObjects})
 AddObjectLibrary(bar ${EndLibraryType} ${EndUserOfObjects})
 AddObjectLibrary(gobby ${EndLibraryType} ${EndUserOfObjects})
 
-target_link_libraries(gobby PUBLIC foo)
+# directories and sources transitively don't go outside of gobby but foo.obj is going to be linked against baz.dll 
+# (though baz.dll can't use foo.h, like main.exe as well).
+target_link_libraries(gobby PRIVATE foo)
 
 # We also have to duplicate foo_EXPORTS to compile gobby against foo correctly. In case gobby itself includes headers of
 # foo, it's going to have them dllimport, and as both gobby and foo are objects that going to be embedded into a single
@@ -98,10 +105,10 @@ target_link_libraries(gobby PUBLIC foo)
 set_target_properties(gobby PROPERTIES COMPILE_AS_OBJECT TRUE)
 
 # This library is either SHARED or STATIC for our example.
-add_library(baz ${EndLibraryType} src/baz/baz.cpp)
+add_library(baz ${EndLibraryType} src/libs/baz/baz.cpp)
 target_link_libraries(baz PUBLIC gobby bar)
 
 # Finally this our consumer of baz, it doesn't link against other libs though can use all of their functionality
 # either through baz.dll (in case it's SHARED) or directly (in case baz is STATIC).
 add_executable(main src/main.cpp)
-target_link_libraries(main baz)
+target_link_libraries(main PRIVATE baz)

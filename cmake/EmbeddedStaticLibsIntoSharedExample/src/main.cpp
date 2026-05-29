@@ -1,15 +1,11 @@
-#include "foo/foo.h"
-#include "bar/bar.h"
-#include "gobby/gobby.h"
+#include "bar.h"
+#include "gobby.h"
+//#include "foo.h" can't include foo.h because gobby links foo privately
 #include <vector>
 #include <cstdint>
 
 int main()
 {
-    Foo foo;
-    std::vector<std::int32_t> Some;
-    foo.PrintHelloWorld(10, Some);
-
     Bar bar;
     std::vector<std::int32_t> Another;
     bar.PrintHelloWorldFromBar(20, Another);

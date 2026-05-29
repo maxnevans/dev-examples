@@ -1,7 +1,7 @@
 #include "gobby.h"
 #include <algorithm>
 #include <iostream>
-#include "../foo/foo.h"
+#include "foo.h"
 
 void Gobby::PrintHelloWorldFromGobby(std::int32_t Amount, std::vector<std::int32_t>& Apples)
 {
